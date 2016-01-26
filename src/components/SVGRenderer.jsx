@@ -26,6 +26,7 @@ export default class SVGRenderer extends Component {
 
   renderThreeObject() {
     const paths = []
+    this.props.threeObject.updateMatrixWorld()
     this.props.threeObject.traverse((object) => {
       if (object.geometry) {
         paths.push(this.renderPath(object))
