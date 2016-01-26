@@ -1,5 +1,8 @@
 import React from 'react'
 import THREE from 'three'
+import ThreeBSPFactory from 'three-csg'
+const ThreeBSP = ThreeBSPFactory(THREE)
+import Clipper from 'jsclipper'
 
 
 let laserKerf = 0.22
@@ -40,21 +43,91 @@ function buildMesh(geometry) {
   return new THREE.Mesh(geometry)
 }
 
+function getWorldVertices(mesh) {
+  return mesh
+    .geometry
+    .vertices
+    .map(vertex => vertex.clone())
+    .map(vertex => {
+      vertex.applyMatrix4(mesh.matrix)
+      mesh.traverseAncestors(object => vertex.applyMatrix4(object.matrix))
+      return vertex
+    })
+}
 
-// function geometryToPolygon(geometry) {
-//   let vertices = geometry
-//     .vertices
-//     .map(vertex => [vertex.x, vertex.y])
-//   return new Clipper.Polygon(vertices)
-// }
-//
-//
-// function polygonToGeometry(polygon) {
-//   let vertices = polygon
-//     .getShape()
-//     .map(vertex => new THREE.Vector2(vertex[0], vertex[1]))
-//   return new THREE.Shape(vertices).makeGeometry()
-// }
+function getLocalVertices(mesh) {
+  return mesh
+    .geometry
+    .vertices
+    .map(vertex => vertex.clone())
+    .map(vertex => {
+      vertex.applyMatrix4(mesh.matrix)
+      return vertex
+    })
+}
+
+
+function wrapIntoTHREE(paths) {
+  return paths
+    .map(obj => {
+      obj.updateMatrixWorld(true)
+      return obj
+    })
+    .reduce((parent, obj) => {
+      parent.add(obj)
+      return parent
+    }, new THREE.Object3D())
+}
+
+
+function meshToPolygon(mesh) {
+  mesh.updateMatrix()
+  const vertices = getLocalVertices(mesh)
+  return geometryToPolygon({ vertices })
+}
+
+
+function polygonToMesh(polygon) {
+  return buildMesh(polygonToGeometry(polygon))
+}
+
+
+function geometryToPolygon(geometry) {
+  let vertices = geometry
+    .vertices
+    .map(vertex => [vertex.x, vertex.y])
+  return new Clipper.Polygon(vertices)
+}
+
+
+function polygonToGeometry(polygon) {
+  let vertices = polygon
+    .getShape()
+    .map(vertex => new THREE.Vector2(vertex[0], vertex[1]))
+  return new THREE.Shape(vertices).makeGeometry()
+}
+
+
+function unionMeshes(meshes) {
+  const polygons = meshes.map(meshToPolygon)
+  const children = meshes.map(m => {
+    const parent = new THREE.Object3D()
+    parent.applyMatrix(m.matrix)
+
+    if (m.children.length > 0) {
+      parent.add.apply(parent, m.children)
+    }
+
+    return parent
+  })
+  const unions = polygons[0].unionMultiple(polygons.slice(1)).map(polygonToMesh)
+
+  const result = new THREE.Object3D()
+  unions.forEach(union => result.add(union))
+  children.forEach(child => result.add(child))
+
+  return result
+}
 
 
 function degreeToRadians(degree) {
@@ -145,7 +218,7 @@ class Cut {
 
   build() {
     const cut = this.index % 2 == 0 ? this.buildEvenCut() : this.buildOddCut()
-    return cut.translateX(this.horizontalOffset + 30)
+    return cut.translateX(this.horizontalOffset)
   }
 
 
@@ -224,8 +297,12 @@ class Hook {
       const left = new THREE.Object3D()
       left.add(buildLeftHook())
       left.translateY(config.height / 2)
-      left.translateX(scale / 2)
-      yield left
+      left.translateX(scale / 2 + 4) // HACKY: remove + 4
+      left.updateMatrixWorld()
+      const verticesL = getWorldVertices(left.children[0])
+      const geoL = new THREE.Geometry()
+      geoL.vertices = verticesL
+      yield buildMesh(geoL)
 
       const buildRightHook = () => {
         const rightHook = hookTemplate.clone()
@@ -237,8 +314,12 @@ class Hook {
       const right = new THREE.Object3D()
       right.add(buildRightHook())
       right.translateY(config.height / 2)
-      right.translateX(config.width + 1.5 * scale)
-      yield right
+      right.translateX(config.width + 1.5 * scale - 4)
+      right.updateMatrixWorld()
+      const verticesR = getWorldVertices(right.children[0])
+      const geoR = new THREE.Geometry()
+      geoR.vertices = verticesR
+      yield buildMesh(geoR)
     }
   }
 }
@@ -280,25 +361,18 @@ class Builder {
   }
 
   buildPaths() {
-    return [ this.buildOutline() ]
-      .concat(this.buildLinks(this.config.links))
-      .concat(this.buildClosure())
+    // nest links into outline
+    const outline = this.buildOutline()
+    const links = this.buildLinks(this.config.links)
+    links.forEach(link => outline.add(link))
+
+    // concat to all paths to a list
+    return [ outline ].concat(this.buildClosure())
   }
 
-  wrapIntoTHREE(paths) {
-    return paths
-      .map(obj => {
-        obj.updateMatrixWorld(true)
-        return obj
-      })
-      .reduce((parent, obj) => {
-        parent.add(obj)
-        return parent
-      }, new THREE.Object3D())
-  }
 
   build() {
-    return this.wrapIntoTHREE(this.buildPaths())
+    return unionMeshes(this.buildPaths())
   }
 }
 
