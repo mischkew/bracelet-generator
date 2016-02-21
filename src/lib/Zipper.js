@@ -1,6 +1,5 @@
-import ReactDOM from 'react-dom/server'
+import { toMarkup } from '../components/SVGRenderer'
 import JSZip from 'jszip'
-
 
 export default class Zipper {
   static reactToMarkup(element) {
@@ -16,6 +15,6 @@ export default class Zipper {
   }
 
   static getUrl(element) {
-    return this.generateZip(this.reactToMarkup(element))
+    return this.generateZip(toMarkup(element))
   }
 }
