@@ -1,23 +1,28 @@
 import React, { Component } from 'react'
+import ReactDOM from 'react-dom/server'
+import { getWorldVertices } from '../lib/three-helpers.js'
 
+// TODO: sizes have to be exact mm
 let outline = {
   lineWidthFile: 0.004,
   lineWidth: 0.4,
   scale: 4
 }
 
+export function toMarkup(element) {
+  let svgMarkup = ReactDOM.renderToStaticMarkup(element)
+  // xmlns fix because react don't support xmlns:
+  // https://github.com/facebook/react/blob/master/src/renderers/dom/shared/SVGDOMPropertyConfig.js#L56
+  const insertIndex = 4
+  svgMarkup = svgMarkup.slice(0, insertIndex) +
+              ' xmlns="http://www.w3.org/2000/svg"' +
+              svgMarkup.slice(insertIndex)
+  return svgMarkup
+}
 
-export default class SVGRenderer extends Component {
+export class SVGRenderer extends Component {
   buildPathDescription(mesh) {
-    return mesh
-      .geometry
-      .vertices
-      .map((vertex) => vertex.clone())
-      .map((vertex) => {
-        vertex.applyMatrix4(mesh.matrix)
-        mesh.traverseAncestors(object => vertex.applyMatrix4(object.matrix))
-        return vertex
-      })
+    return getWorldVertices(mesh)
       .reduce(
         (pathString, vertex) => pathString + vertex.x + "," + vertex.y + " ",
         'M '
@@ -38,12 +43,8 @@ export default class SVGRenderer extends Component {
   renderPaths() {
     if (this.props.threeObject) {
       return this.renderThreeObject()
-    } else if (this.props.geometries) {
-      return this.props
-        .geometries
-        .map(this.renderPath)
-    } else if (this.props.geometry) {
-      return this.renderPath(this.props.geometry)
+    } else {
+      throw new Error('this.props.threeObject is not of type THREE.Object3D.')
     }
   }
 
