@@ -1,7 +1,8 @@
 import React, { Component } from 'react'
 import Zipper from './lib/Zipper'
+import { rotateAroundCenter, AXES } from './lib/three-helpers.js'
 import BraceletBuilder from './lib/BraceletBuilder'
-import SVGRenderer from './components/SVGRenderer'
+import { SVGRenderer } from './components/SVGRenderer'
 
 
 let builder = new BraceletBuilder({
@@ -11,9 +12,14 @@ let builder = new BraceletBuilder({
   linkLengthPercentage: 0.75,
   materialWidth: 2
 })
+
 let threeObject = builder.build()
+// rotateAroundCenter(threeObject, AXES.Z, Math.PI / 2)
+
 let svgElement = <SVGRenderer
   isFile={true}
+  width={builder.getWidth()}
+  height={builder.config.height}
   config={builder.config}
   threeObject={threeObject} />
 let url = Zipper.getUrl(svgElement)
