@@ -23,7 +23,7 @@ function degreeToRadians(degree) {
 function computeMinimumLinkCount(configs) {
   let radians = degreeToRadians(configs.angle)
   let piQuarter = PI / 4
-  let w = configs.materialWidth
+  let w = configs.materialThickness
   let wSqr = w * w
   let cosFactor = Math.acos((configs.kerf + w) / (2 * Math.sqrt(wSqr / 2)))
 
@@ -37,34 +37,43 @@ function widthFromRadius(radius) {
 
 
 export default class Builder {
-  constructor(config, linkGenerator, ClaspClass) {
+  constructor(config, CutClass, ClaspClass) {
     if (config.kerf < LASER_KERF) {
       config.kerf = LASER_KERF
       console.warn('You selected a kerf smaller than the default laser kerf!')
     }
 
     this.config = buildConfig(config)
-    this.linkGenerator = linkGenerator(this.config)
-    this.closureGenerator = new ClaspClass(this.config).makeGenerator()
+    this.cut = CutClass
+    this.linkGenerator = this.cut.generator(this.config)
+
+    this.clasp = new ClaspClass(this.config)
+    const totalWidth = this.cut.getTotalWidth(this.config)
+    if (this.config.width < totalWidth) {
+      this.config.width = totalWidth + 2 * this.config.materialThickness
+      console.warn('You need more space to place all required links. Auto-resized the bracelet width.')
+    }
+
+    this.closureGenerator = this.clasp.makeGenerator()
   }
 
 
   buildOutline() {
     return buildMesh(
       buildRectangle(this.config.width, this.config.height)
-    ).translateX(30)
+    ).translateX(this.clasp.scale().x)
   }
 
   getWidth() {
-    return this.config.width + 60
+    return this.config.width + (2 * this.clasp.scale().x)
   }
 
   /*
   # Equally distribute the links according to material width
   # as this results in best tradeoff for stability and flexibility
   */
-  buildLinks(linkCount) {
-    return Array.from(this.linkGenerator(linkCount))
+  buildLinks() {
+    return Array.from(this.linkGenerator())
   }
 
   buildClasps() {
@@ -74,7 +83,7 @@ export default class Builder {
   buildPaths() {
     // nest links into outline
     const outline = this.buildOutline()
-    const links = this.buildLinks(this.config.links)
+    const links = this.buildLinks()
     links.forEach(link => outline.add(link))
 
     // concat all paths to a list

@@ -19,6 +19,13 @@ export default class Cut {
     return config.kerf <= LASER_KERF ? LASER_KERF : config.kerf
   }
 
+  static getTotalWidth(config) {
+    // a cut pair has width of two cuts plus the gap
+    const { links, linkGap } = config
+    const kerf = Cut.getWidth(config)
+    return (links + 1) * kerf + links * linkGap
+  }
+
   buildCut() {
     if (this.config.kerf <= LASER_KERF)
       return {
@@ -80,21 +87,19 @@ export default class Cut {
   # Place cut pairs distributed so they form links.
   */
   static generator(config) {
-    return function*(linkCount) {
-      // a cut pair has width of two cuts plus the gap
-      let kerf = Cut.getWidth(config)
-      let totalCutWidth = (linkCount + 1) * kerf + linkCount * config.materialWidth
+    return function*() {
+      const totalCutWidth = Cut.getTotalWidth(config)
 
       // place all links centered
-      let linkCenterShift = - totalCutWidth / 2
-      let braceletCenterShift = config.width / 2
+      const linkCenterShift = - totalCutWidth / 2
+      const braceletCenterShift = config.width / 2
 
       // place linkCount-many cuts and an additional border
       let x = linkCenterShift + braceletCenterShift
-      for (var i = 0; i < linkCount; i++) {
+      for (var i = 0; i < config.links; i++) {
         let cut = new Cut(config, i, x)
         yield cut.build()
-        x += config.materialWidth + cut.getWidth()
+        x += config.linkGap + cut.getWidth()
       }
     }
   }

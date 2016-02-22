@@ -6,6 +6,6 @@ import ClickClasp from './ClickClasp'
 
 export default class BraceletBuilder extends Builder {
   constructor(config) {
-    super(config, Cut.generator, ClickClasp)
+    super(config, Cut, ClickClasp)
   }
 }
