@@ -3,6 +3,16 @@ import Zipper from './lib/Zipper'
 import { rotateAroundCenter, AXES } from './lib/three-helpers.js'
 import BraceletBuilder from './lib/BraceletBuilder'
 import { SVGRenderer } from './components/SVGRenderer'
+import Slider from 'material-ui/lib/slider'
+import Card from 'material-ui/lib/card/card'
+import CardActions from 'material-ui/lib/card/card-actions'
+import CardHeader from 'material-ui/lib/card/card-header'
+import CardMedia from 'material-ui/lib/card/card-media'
+import CardTitle from 'material-ui/lib/card/card-title'
+import RaisedButton from 'material-ui/lib/raised-button'
+import CardText from 'material-ui/lib/card/card-text'
+import SettingsIcon from 'react-material-icons/icons/action/settings'
+import DownloadIcon from 'react-material-icons/icons/file/file-download'
 
 // all dimensions are given in mm
 const VERSION1 = {
@@ -42,8 +52,26 @@ export default class App extends Component {
   render() {
     return (
       <div>
-        <a href={url}>{url}</a>
-        <br />
+        <RaisedButton
+            label="Download SVG"
+            linkButton={true}
+            href={url}
+            style={{margin: '12px'}}
+            icon={<DownloadIcon />} />
+        <Card>
+          <CardHeader
+              title="Settings"
+              subtitle="Customize your Bracelet"
+              avatar={<SettingsIcon />} />
+          <CardTitle
+              title="General Adjustment"
+              subtitle="Adjust between sturdyness and smoothness" />
+          <CardText>
+            <label>Bracelet size (Radius of your wrist in cm):</label>
+            <Slider min={3} max={7} value={3.5} step={0.1} />
+            <Slider value={0.5} step={0.1} />
+          </CardText>
+        </Card>
         <SVGRenderer
           config={builder.config}
           width={builder.getWidth()}

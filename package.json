@@ -13,8 +13,7 @@
   "keywords": [],
   "author": "Sven Mischkewitz <sven.mkw@gmail.com> (http://github.com/mischkew)",
   "license": "MIT",
-  "bugs": {
-  },
+  "bugs": {},
   "homepage": "",
   "devDependencies": {
     "babel-core": "^6.0.20",
@@ -30,10 +29,13 @@
     "webpack-dev-server": "^1.12.1"
   },
   "dependencies": {
-    "react": "^0.14.0",
-    "react-dom": "^0.14.0",
     "classnames": "^2.2.0",
     "jszip": "^2.5.0",
+    "material-ui": "^0.14.4",
+    "react": "^0.14.0",
+    "react-dom": "^0.14.0",
+    "react-material-icons": "^1.0.1",
+    "react-tap-event-plugin": "^0.2.2",
     "three": "^0.73.0"
   }
 }
