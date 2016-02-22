@@ -1,5 +1,5 @@
 import THREE from 'three'
-import { buildMesh, getWorldVertices, buildRectangle } from './three-helpers'
+import { buildMesh, getWorldVertices, buildRectangle } from '../../../lib/three-helpers'
 import Clasp from './Clasp'
 
 

@@ -2,7 +2,7 @@ import THREE from 'three'
 import { AXES,
          buildMesh,
          getWorldVertices,
-         moveChildrenToObject } from './three-helpers'
+         moveChildrenToObject } from '../../../lib/three-helpers'
 
 const DEFAULT_UNION_INSET = 3
 

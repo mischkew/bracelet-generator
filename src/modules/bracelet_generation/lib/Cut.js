@@ -1,6 +1,6 @@
 import THREE from 'three'
-import { LASER_KERF } from '../defaults'
-import { buildMesh, buildRectangle, buildLineFromOrigin } from './three-helpers'
+import { LASER_KERF } from '../../../defaults'
+import { buildMesh, buildRectangle, buildLineFromOrigin } from '../../../lib/three-helpers'
 
 
 export default class Cut {

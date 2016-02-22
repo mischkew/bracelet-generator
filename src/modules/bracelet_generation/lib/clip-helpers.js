@@ -1,7 +1,7 @@
 import THREE from 'three'
 import { buildMesh,
          getWorldVertices,
-         moveChildrenToObject } from './three-helpers'
+         moveChildrenToObject } from '../../../lib/three-helpers'
 import Clipper from 'jsclipper'
 
 

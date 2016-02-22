@@ -1,6 +1,6 @@
-import { buildMesh, buildRectangle } from './three-helpers'
+import { buildMesh, buildRectangle } from '../../../lib/three-helpers'
 import { unionOuterMeshes } from './clip-helpers'
-import { LASER_KERF, DEFAULTS } from '../defaults'
+import { LASER_KERF, DEFAULTS } from '../../../defaults'
 
 
 const PI = Math.PI
