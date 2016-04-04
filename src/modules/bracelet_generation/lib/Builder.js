@@ -1,24 +1,28 @@
 import { buildMesh, buildRectangle } from '../../../lib/three-helpers'
 import { unionOuterMeshes } from './clip-helpers'
 import { LASER_KERF, DEFAULTS } from '../../../defaults'
+import { DEFAULT_UNION_INSET } from './Clasp'
 
 
 const PI = Math.PI
 
 
-function buildConfig(config) {
-  if (config.radius) {
-    config.width = widthFromRadius(config.radius)
+export function buildConfig(config) {
+  if (config.diameter) {
+    config.width = widthFromDiameter(config.diameter)
   }
 
   return Object.assign({}, DEFAULTS, config)
 }
 
 
-function degreeToRadians(degree) {
+export function degreeToRadians(degree) {
   return degree / 180 * PI
 }
 
+export function radiansToDegrees(radians) {
+  return (radians * 180 * PI)
+}
 
 function computeMinimumLinkCount(configs) {
   let radians = degreeToRadians(configs.angle)
@@ -30,9 +34,22 @@ function computeMinimumLinkCount(configs) {
   return radians / (piQuarter - cosFactor)
 }
 
+export function estimateRadians(configs) {
+  let radians = degreeToRadians(configs.angle)
+  let piQuarter = PI / 4
+  let w = configs.linkGap
+  let wSqr = w * w
+  let cosFactor = Math.acos((configs.kerf + w) / (2 * Math.sqrt(wSqr / 2)))
+
+  return configs.links * (piQuarter - cosFactor)
+}
 
 function widthFromRadius(radius) {
   return 2 * radius * PI
+}
+
+function widthFromDiameter(diameter) {
+  return diameter * PI
 }
 
 
@@ -45,18 +62,24 @@ export default class Builder {
 
     this.config = buildConfig(config)
     this.cut = CutClass
-    this.linkGenerator = this.cut.generator(this.config)
-
     this.clasp = new ClaspClass(this.config)
-    const totalWidth = this.cut.getTotalWidth(this.config)
-    if (this.config.width < totalWidth) {
-      this.config.width = totalWidth + 2 * this.config.materialThickness
+
+    this.constraints = this.buildConstraints(this.config)
+
+    if (this.constraints.moreLinksThanAllowedWidth) {
+      this.config.width = this.cut.getTotalWidth(this.config) + 2 * this.config.materialThickness
       console.warn('You need more space to place all required links. Auto-resized the bracelet width.')
     }
 
+    this.linkGenerator = this.cut.generator(this.config)
     this.closureGenerator = this.clasp.makeGenerator()
   }
 
+  buildConstraints() {
+    return {
+      moreLinksThanAllowedWidth: this.config.width - 2 * DEFAULT_UNION_INSET < this.cut.getTotalWidth(this.config)
+    }
+  }
 
   buildOutline() {
     return buildMesh(

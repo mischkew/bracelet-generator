@@ -4,7 +4,7 @@ import { AXES,
          getWorldVertices,
          moveChildrenToObject } from '../../../lib/three-helpers'
 
-const DEFAULT_UNION_INSET = 3
+export const DEFAULT_UNION_INSET = 3
 
 // TODO: load hook forms from svg shapes
 export default class Clasp {
